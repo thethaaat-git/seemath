@@ -15,7 +15,6 @@ httpd = None
 
 class MathHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
-        # Если зашли на главную страницу без /web/, перенаправляем
         if self.path == '/':
             self.send_response(302)
             self.send_header('Location', '/web/')
@@ -69,26 +68,30 @@ def start_server():
 server_thread = threading.Thread(target=start_server, daemon=True)
 server_thread.start()
 
-# Небольшая пауза, чтобы сервер точно успел запуститься
 time.sleep(1)
 
 if __name__ == '__main__':
-    # Создаем нативное окно
-    # pywebview использует движок вашего браузера по умолчанию (Edge/Chrome/Safari)
+    # Получаем абсолютный путь к иконке
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    icon_path = os.path.join(base_dir, 'assets', 'icon.png')
+    
+    # Если вдруг иконки .png нет, проверяем .ico (на всякий случай)
+    if not os.path.exists(icon_path):
+        icon_path = os.path.join(base_dir, 'assets', 'icon.ico')
+
     window = webview.create_window(
         title='SeeMath',
         url=f'http://localhost:{active_port}/web/',
         width=1280,
         height=850,
-        background_color='#000000' # Темный фон, чтобы не было белой вспышки при загрузке
+        background_color='#000000'
     )
     
-    # Запуск окна
     try:
-        webview.start()
+        # Передаем иконку в webview.start()
+        webview.start(icon=icon_path if os.path.exists(icon_path) else None)
     except Exception as e:
         print("Ошибка запуска приложения:", e)
     
-    # При закрытии окна останавливаем сервер
     if httpd:
         httpd.shutdown()
